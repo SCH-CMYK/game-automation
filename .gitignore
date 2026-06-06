@@ -51,7 +51,8 @@ gmt/*.pth
 gmt/point.json
 gmt/labels.txt
 gmt/update.json
-gmt/train_data/
+gmt/train_data/*
+!gmt/train_data/.gitkeep
 
 # User route data
 routes/**/*.json
