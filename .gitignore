@@ -1,0 +1,59 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# YOLO training artifacts
+runs/
+*.npy
+*.cache
+*.tune
+
+# Logs
+logs/
+
+# Screenshots (runtime output)
+screenshots/
+
+# Claude Code
+.claude/
+.codegraph/
+.grounded.json
+
+# Large model files (use Git LFS or manual download)
+models/*.pt
+models/*.pth
+models/*.onnx
+
+# User data
+minimap_region.json
+codegraph.db
+.pytest_cache/
+
+# GMT sub-project data (large/generated files)
+gmt/*.pth
+gmt/point.json
+gmt/labels.txt
+gmt/update.json
+gmt/train_data/
+
+# User route data
+routes/**/*.json
+
+# Platform
+Thumbs.db
+Desktop.ini

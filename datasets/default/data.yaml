@@ -1,0 +1,9 @@
+names:
+- ore
+- creature
+- obstacle
+- character
+nc: 4
+path: .
+train: images/train
+val: images/val

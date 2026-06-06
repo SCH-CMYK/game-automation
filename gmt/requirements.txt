@@ -1,0 +1,7 @@
+opencv-python
+numpy
+mss
+Pillow
+torch      # 仅 main_ai.py 需要，直接安装会下载CPU版本，需要安装cuda下载GPU版本，不要下错
+kornia     # 仅 main_ai.py 需要
+requests
