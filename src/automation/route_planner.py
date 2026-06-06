@@ -477,6 +477,30 @@ class RoutePlanner:
             logger.info("导航结束")
             self.running = False
 
+    def _recover_position(self, fallback_x, fallback_y):
+        """脱离战斗/采矿后立即定位，获取当前真实坐标"""
+        self._walk_held = False
+        # 等 UI 消失 + 小地图恢复
+        for attempt in range(6):
+            time.sleep(0.15)
+            frame = self.capture.grab()
+            mm = self.grab_minimap(frame)
+            if mm is not None and hasattr(self, '_hybrid_positioner') and self._hybrid_positioner:
+                # 先用大致坐标初始化，给 LoFTR 一个搜索起点
+                self._hybrid_positioner.init_position(fallback_x, fallback_y)
+                pos = self._hybrid_positioner.get_position(mm)
+                if pos is not None:
+                    logger.info(f"  恢复定位成功: ({int(pos[0])}, {int(pos[1])})")
+                    return pos
+                # LoFTR 没匹配到：可能还在 UI 过渡，再等等
+            if attempt == 2:
+                # 第 3 次还没定位到，往前走一小步触发画面刷新
+                self.controller.key_down('w')
+                time.sleep(0.3)
+                self.controller.key_up('w')
+        logger.info(f"  恢复定位超时，使用回退坐标: ({fallback_x}, {fallback_y})")
+        return (float(fallback_x), float(fallback_y))
+
     def _stop_walk(self):
         if self._walk_held:
             try: self.controller.key_up('w')
@@ -527,11 +551,9 @@ class RoutePlanner:
                     tx, ty = self.waypoints[self.current_wp_idx][0], self.waypoints[self.current_wp_idx][1]
                     name = self.waypoints[self.current_wp_idx][2]
                     logger.info(f"  战斗后跳至 [{self.current_wp_idx}] {name}")
-                if hasattr(self, '_hybrid_positioner') and self._hybrid_positioner:
-                    self._hybrid_positioner.init_position(tx, ty)
-                self._last_pos = (float(tx), float(ty))
+                # 恢复定位：立即扫小地图获取真实位置
+                self._last_pos = self._recover_position(tx, ty)
                 import gc; gc.collect()
-                self._walk_held = False
                 self.controller.key_down('w')
                 self.controller.key_down('shift')
                 self._walk_held = True
@@ -566,11 +588,8 @@ class RoutePlanner:
                     logger.info("  矿！")
                     self._stop_walk()
                     self._quick_mine(automator, frame)
-                    # 采矿后恢复 LoFTR
-                    if hasattr(self, '_hybrid_positioner') and self._hybrid_positioner:
-                        self._hybrid_positioner.init_position(tx, ty)
-                    self._last_pos = (float(tx), float(ty))
-                    self._walk_held = False
+                    # 采矿后恢复：立即扫小地图获取真实位置
+                    self._last_pos = self._recover_position(tx, ty)
                     self.controller.key_down('w')
                     self.controller.key_down('shift')
                     self._walk_held = True
