@@ -1,5 +1,6 @@
 @echo off
 title GameAuto Setup
+cd /d "%~dp0"
 
 echo ========================================
 echo    GameAuto - Setup
