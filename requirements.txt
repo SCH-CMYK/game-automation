@@ -1,4 +1,4 @@
-torch>=2.0.0,<2.6.0
+torch>=2.0.0
 ultralytics>=8.3.0
 customtkinter>=5.2.0
 opencv-python>=4.8.0
