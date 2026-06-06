@@ -4,7 +4,7 @@ customtkinter>=5.2.0
 opencv-python>=4.8.0
 numpy>=1.24.0
 mss>=9.0.0
-interception>=1.0.0
+interception-python
 pywin32>=306
 Pillow>=10.0.0
 pyyaml>=6.0
