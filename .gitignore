@@ -23,11 +23,13 @@ runs/
 *.cache
 *.tune
 
-# Logs
-logs/
+# Logs (keep folder with .gitkeep)
+logs/*
+!logs/.gitkeep
 
-# Screenshots (runtime output)
-screenshots/
+# Screenshots - runtime output (keep folder with .gitkeep)
+screenshots/*
+!screenshots/.gitkeep
 
 # Claude Code
 .claude/
