@@ -508,7 +508,7 @@ class RoutePlanner:
             mm = self.grab_minimap(frame)
             pos = self.get_position(mm)
             if pos is None:
-                time.sleep(0.2)
+                time.sleep(0.05)
                 continue
 
             # 2. 战斗检测（每帧，最高优先级）
@@ -529,7 +529,7 @@ class RoutePlanner:
                     logger.info(f"  战斗后跳至 [{self.current_wp_idx}] {name}")
                 if hasattr(self, '_hybrid_positioner') and self._hybrid_positioner:
                     self._hybrid_positioner.init_position(tx, ty)
-                self._last_pos = None
+                self._last_pos = (float(tx), float(ty))
                 import gc; gc.collect()
                 self._walk_held = False
                 self.controller.key_down('w')
@@ -569,7 +569,7 @@ class RoutePlanner:
                     # 采矿后恢复 LoFTR
                     if hasattr(self, '_hybrid_positioner') and self._hybrid_positioner:
                         self._hybrid_positioner.init_position(tx, ty)
-                    self._last_pos = None
+                    self._last_pos = (float(tx), float(ty))
                     self._walk_held = False
                     self.controller.key_down('w')
                     self.controller.key_down('shift')
@@ -597,7 +597,7 @@ class RoutePlanner:
                 logger.info(f"  [{step}] ({int(px_now)},{int(py_now)}) dist={dist:.0f}")
 
             prev_pos = (px_now, py_now)
-            time.sleep(0.2)
+            time.sleep(0.08)
 
         self._stop_walk()
         if not self.running:
