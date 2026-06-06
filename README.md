@@ -94,13 +94,13 @@ game-automation/
 
 模型文件较大，需单独下载（放入 `models/` 目录）：
 
-| 文件 | 用途 | 下载 |
-|------|------|------|
-| `best_20260601.pt` | YOLO 矿石/精灵/障碍物/角色检测 | [GitHub Releases](../../releases) |
-| `loftr_model.onnx` | LoFTR 小地图特征匹配 | [GitHub Releases](../../releases) |
-| `big_map.png` | 游戏大地图 (8192×8192) | 自行准备，放入 `maps/` |
+| 文件 | 用途 | 大小 | 下载 |
+|------|------|------|------|
+| `best_20260601.pt` | YOLO 矿石/精灵/障碍物/角色检测 | 18 MB | [⬇ 下载](https://github.com/SCH-CMYK/game-automation/releases/download/v1.0/best_20260601.pt) |
+| `loftr_model.onnx` | LoFTR 小地图特征匹配 | 37 MB | [⬇ 下载](https://github.com/SCH-CMYK/game-automation/releases/download/v1.0/loftr_model.onnx) |
+| `big_map.png` | 游戏大地图 (8192×8192) | 3 MB | [⬇ 下载](https://github.com/SCH-CMYK/game-automation/releases/download/v1.0/big_map.png) |
 
-> 模型文件也可从 Releases 页面下载。首次使用请确保 `models/` 和 `maps/` 目录下有对应文件。
+> 下载后放入对应目录：`.pt` 和 `.onnx` → `models/`，`.png` → `maps/`
 
 ## 常见问题
 

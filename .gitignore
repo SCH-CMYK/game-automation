@@ -54,6 +54,9 @@ gmt/train_data/
 # User route data
 routes/**/*.json
 
+# Release packages
+release_models.zip
+
 # Platform
 Thumbs.db
 Desktop.ini
