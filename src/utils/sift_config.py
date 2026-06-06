@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 
 # 从 GMT 配置加载（权威源）
-_gmt_cfg_path = Path(__file__).parent / "gmt" / "config.json"
+_gmt_cfg_path = Path(__file__).parent.parent.parent / "gmt" / "config.json"
 if _gmt_cfg_path.exists():
     with open(_gmt_cfg_path, encoding="utf-8") as f:
         _gmt = json.load(f)

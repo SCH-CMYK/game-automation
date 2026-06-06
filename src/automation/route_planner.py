@@ -15,8 +15,8 @@ import time
 import threading
 import logging
 
-from config import ROUTE, AI
-from minimap_detector import MinimapDetector
+from src.utils.config import ROUTE, AI
+from src.engine.minimap_detector import MinimapDetector
 
 logger = logging.getLogger("gameauto.route")
 

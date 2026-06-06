@@ -13,7 +13,7 @@ from pathlib import Path
 from logging.handlers import RotatingFileHandler
 from datetime import datetime
 
-PROJECT_DIR = Path(__file__).parent.resolve()
+PROJECT_DIR = Path(__file__).parent.parent.parent.resolve()
 LOGS_DIR = PROJECT_DIR / "logs"
 LOGS_DIR.mkdir(exist_ok=True)
 

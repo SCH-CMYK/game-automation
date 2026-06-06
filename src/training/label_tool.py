@@ -336,7 +336,7 @@ class LabelTool:
         logger.info("已保存: %s", label_path)
 
     def _open_dir(self):
-        project = Path(__file__).parent.resolve()
+        project = Path(__file__).parent.parent.parent.resolve()
         candidates = [
             project / "datasets" / "default" / "images" / "train",
             project / "datasets" / "default" / "images",

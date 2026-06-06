@@ -14,17 +14,17 @@ from tkinter import messagebox, filedialog
 sys.path.insert(0, str(Path(__file__).parent))
 
 import logging
-from logger import get_logger, install_crash_handler
+from src.utils.logger import get_logger, install_crash_handler
 
 # 初始化日志系统
 logger = get_logger("gameauto.main")
 install_crash_handler()
 
-from screen_capture import ScreenCapture
-from vision_engine import VisionEngine
-from controller import Controller
-from automator import Automator
-from hotkey import create_hotkey
+from src.engine.screen_capture import ScreenCapture
+from src.engine.vision_engine import VisionEngine
+from src.engine.controller import Controller
+from src.automation.automator import Automator
+from src.automation.hotkey import create_hotkey
 
 logger = logging.getLogger("gameauto.main")
 
@@ -336,14 +336,14 @@ class GameAuto(ctk.CTk):
 
     # ========== 训练 ==========
     def _create_dataset(self):
-        from trainer import create_dataset_structure
+        from src.training.trainer import create_dataset_structure
         classes = ["ore", "creature", "obstacle", "character"]
         d = self.dataset_var.get()
         create_dataset_structure(d, classes)
         self.train_status.configure(text=f"数据集已创建: {d}")
 
     def _launch_label_tool(self):
-        from label_tool import launch_label_tool
+        from src.training.label_tool import launch_label_tool
         img_dir = PROJECT_DIR / "datasets" / "default" / "images" / "train"
         # 自动创建目录
         img_dir.mkdir(parents=True, exist_ok=True)
@@ -367,7 +367,7 @@ class GameAuto(ctk.CTk):
                           parent=None)  # None=独立窗口, 避免 CTk 兼容问题
 
     def _start_training(self):
-        from trainer import YOLOTrainer
+        from src.training.trainer import YOLOTrainer
         dataset = self.dataset_var.get()
         if not Path(dataset).exists():
             messagebox.showerror("错误", "数据集目录不存在"); return
@@ -606,7 +606,7 @@ class GameAuto(ctk.CTk):
         if frame is None:
             self.route_status.configure(text="无法获取截图")
             return
-        from minimap_detector import MinimapDetector
+        from src.engine.minimap_detector import MinimapDetector
         detector = MinimapDetector()
         region = detector.detect(frame)
         if region:
@@ -618,32 +618,6 @@ class GameAuto(ctk.CTk):
         else:
             self.route_status.configure(text="自动检测失败，请手动框选小地图")
             logger.warning("自动检测小地图失败")
-
-    def _freeze_for_mm(self):
-        """弹出圆形框选小地图工具"""
-        frame = self._preview_frame if self._preview_frame is not None else self.capture.grab()
-        if frame is None:
-            self.route_status.configure(text="无法获取截图，请确保游戏画面可见")
-            return
-
-        from minimap_selector import select_minimap
-        self.route_status.configure(text="请在弹出窗口中框选小地图...")
-
-        # 在新线程中运行（避免阻塞 GUI）
-        def _select():
-            region = select_minimap(frame)
-            if region:
-                self._mm_region = region
-                x, y, w, h = region
-                self._save_mm_region(region)
-                self.after(0, lambda: self.route_status.configure(
-                    text=f"小地图已选: ({x},{y}) {w}x{h}"))
-            else:
-                self.after(0, lambda: self.route_status.configure(
-                    text="已取消框选"))
-
-        import threading
-        threading.Thread(target=_select, daemon=True).start()
 
     def _freeze_for_mm(self):
         """冻结画面让用户框选小地图区域"""
@@ -725,7 +699,7 @@ class GameAuto(ctk.CTk):
             if not hasattr(self, '_route_waypoints') or len(self._route_waypoints) < 2:
                 messagebox.showwarning("提示", "需要至少2个途经点"); return
 
-        from route_planner import RoutePlanner
+        from src.automation.route_planner import RoutePlanner
         self._route_planner = RoutePlanner(self.controller, self.capture)
         self._route_planner.set_logic_map(self._big_map)
         if self._mm_region:

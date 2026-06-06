@@ -14,16 +14,16 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 def test_imports():
     """所有核心模块可正常导入"""
-    from screen_capture import ScreenCapture
-    from vision_engine import VisionEngine
-    from controller import Controller
-    from automator import Automator
-    from hotkey import HotkeyBinder, create_hotkey
-    from route_planner import RoutePlanner
-    from trainer import YOLOTrainer, create_dataset_structure
-    from sift_config import MINIMAP, SIFT_MATCH_RATIO
-    from config import MINING, APP
-    from logger import get_logger
+    from src.engine.screen_capture import ScreenCapture
+    from src.engine.vision_engine import VisionEngine
+    from src.engine.controller import Controller
+    from src.automation.automator import Automator
+    from src.automation.hotkey import HotkeyBinder, create_hotkey
+    from src.automation.route_planner import RoutePlanner
+    from src.training.trainer import YOLOTrainer, create_dataset_structure
+    from src.utils.sift_config import MINIMAP, SIFT_MATCH_RATIO
+    from src.utils.config import MINING, APP
+    from src.utils.logger import get_logger
     import interception
     import yaml
     print("  PASS: imports")
@@ -31,7 +31,7 @@ def test_imports():
 
 def test_config():
     """配置正常加载"""
-    from config import MINING, APP
+    from src.utils.config import MINING, APP
 
     assert hasattr(MINING, 'walk_key'), "MiningConfig missing walk_key"
     assert MINING.max_lost_frames == 20

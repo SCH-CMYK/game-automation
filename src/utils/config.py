@@ -40,7 +40,7 @@ class MiningConfig:
 
 @dataclass
 class AppConfig:
-    project_dir: Path = Path(__file__).parent.resolve()
+    project_dir: Path = Path(__file__).parent.parent.parent.resolve()
     models_dir: Path = project_dir / "models"
     datasets_dir: Path = project_dir / "datasets"
     routes_dir: Path = project_dir / "routes"

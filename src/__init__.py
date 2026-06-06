@@ -1,0 +1,1 @@
+# GameAuto — AI Game Automation

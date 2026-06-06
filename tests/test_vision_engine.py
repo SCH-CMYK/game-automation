@@ -8,8 +8,8 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from vision_engine import VisionEngine
-from logger import get_logger
+from src.engine.vision_engine import VisionEngine
+from src.utils.logger import get_logger
 
 
 class TestVisionEngineInit:

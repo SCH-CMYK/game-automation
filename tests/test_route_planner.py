@@ -9,8 +9,8 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from route_planner import RoutePlanner
-from config import ROUTE
+from src.automation.route_planner import RoutePlanner
+from src.utils.config import ROUTE
 from tests.conftest import MockCapture, MockController
 
 

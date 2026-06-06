@@ -17,7 +17,7 @@ import sys
 import hashlib
 from pathlib import Path
 
-PROJECT_DIR = Path(__file__).parent.resolve()
+PROJECT_DIR = Path(__file__).parent.parent.parent.resolve()
 ROUTES_DIR = PROJECT_DIR / "routes"
 
 

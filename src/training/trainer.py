@@ -105,7 +105,7 @@ class YOLOTrainer:
         search_dir: 搜索训练结果的根目录
         name: 自定义模型文件名（不带扩展名），默认 best
         """
-        root = Path(search_dir) if search_dir else Path(__file__).parent.resolve()
+        root = Path(search_dir) if search_dir else Path(__file__).parent.parent.parent.resolve()
         runs_dir = root / "runs" / "detect"
         train_dirs = sorted(runs_dir.glob("train*"), key=lambda p: p.stat().st_mtime, reverse=True)
         best_pt = train_dirs[0] / "weights" / "best.pt" if train_dirs else None
