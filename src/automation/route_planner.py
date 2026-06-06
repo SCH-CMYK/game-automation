@@ -112,7 +112,7 @@ class RoutePlanner:
     def _load_hybrid_positioner(self, map_image):
         """加载混合定位引擎（Kornia LoFTR，不依赖 AI 模型）"""
         try:
-            from hybrid_positioner import HybridPositioner
+            from src.engine.hybrid_positioner import HybridPositioner
             self._hybrid_positioner = HybridPositioner("", map_image)
             self._hybrid_positioner.set_map(map_image)
             logger.info("混合定位引擎已加载（Kornia LoFTR）")

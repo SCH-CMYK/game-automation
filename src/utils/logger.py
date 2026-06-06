@@ -2,7 +2,7 @@
 GameAuto 结构化日志 — rotating file handler + console handler
 
 用法:
-    from logger import get_logger
+    from src.utils.logger import get_logger
     logger = get_logger(__name__)
     logger.info("消息")
     logger.error("错误", exc_info=True)
