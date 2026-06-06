@@ -1,5 +1,4 @@
 @echo off
-chcp 65001 >nul
 title GameAuto
 cd /d "%~dp0"
 
