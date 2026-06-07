@@ -16,7 +16,7 @@ import time
 import threading
 import logging
 
-from src.utils.config import ROUTE, AI
+from src.utils.config import ROUTE, AI, scale_x, scale_y, CURRENT_H
 from src.engine.minimap_detector import MinimapDetector
 
 logger = logging.getLogger("gameauto.route")
@@ -25,19 +25,6 @@ logger = logging.getLogger("gameauto.route")
 def distance_2d(a, b):
     return math.hypot(a[0] - b[0], a[1] - b[1])
 
-
-class RoutePlanner:
-    """颜色+箭头匹配导航引擎"""
-
-    def __init__(self, controller, capture):
-        self.controller = controller
-        self.capture = capture
-        self.waypoints = []
-        self.current_wp_idx = 1
-        self.running = False
-        self.minimap_region = None  # (x, y, w, h) 屏幕坐标
-        self._minimap_detector = MinimapDetector()  # 自动检测器
-        self._hybrid_positioner = None  # 混合定位引擎
 
 logger = logging.getLogger("gameauto.route")
 
@@ -54,6 +41,11 @@ class RoutePlanner:
         self.minimap_region = None  # (x, y, w, h) 屏幕坐标
         self._minimap_detector = MinimapDetector()  # 自动检测器
         self._ai_positioner = None  # AI 定位引擎（可选）
+        # 分辨率自适应阈值
+        self._battle_mm_x = scale_x(1700)
+        self._battle_mm_y = scale_y(200)
+        self._escape_btn_x = scale_x(1114)
+        self._escape_btn_y = scale_y(883)
         self._hybrid_positioner = None  # 混合定位引擎
 
         # SIFT
@@ -535,7 +527,7 @@ class RoutePlanner:
             # 2. 战斗检测（每帧，最高优先级）
             self._minimap_detector.reset()
             r = self._minimap_detector.detect(frame)
-            in_battle = (r is None or r[0] < 1700 or r[1] > 200)
+            in_battle = (r is None or r[0] < self._battle_mm_x or r[1] > self._battle_mm_y)
             battle_ok = time.time() - getattr(self, '_last_battle_time', 0) > 8.0
             if in_battle and battle_ok:
                 logger.info("  进入战斗，退出中...")
@@ -765,7 +757,7 @@ class RoutePlanner:
         logger.info("  === 战斗逃跑 ===")
         self.controller.press('escape')
         time.sleep(1.5)
-        self.controller.click(1114, 883)
+        self.controller.click(self._escape_btn_x, self._escape_btn_y)
         logger.info("  逃跑完成")
 
     def _mine_at_waypoint(self, automator, name):

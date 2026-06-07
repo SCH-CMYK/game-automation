@@ -127,4 +127,42 @@ MINING = MiningConfig()
 APP = AppConfig()
 ROUTE = RouteConfig()
 AI = AIConfig()
+
+
+# ========== 分辨率自适应 ==========
+
+import ctypes
+
+_REF_W, _REF_H = 1920, 1080  # 参考分辨率
+
+def _detect_resolution():
+    """检测主显示器分辨率"""
+    try:
+        user32 = ctypes.windll.user32
+        w = user32.GetSystemMetrics(0)
+        h = user32.GetSystemMetrics(1)
+        return w, h
+    except Exception:
+        return _REF_W, _REF_H
+
+_SCREEN_W, _SCREEN_H = _detect_resolution()
+
+def scale_x(x: int) -> int:
+    """水平坐标缩放"""
+    return int(x * _SCREEN_W / _REF_W)
+
+def scale_y(y: int) -> int:
+    """垂直坐标缩放"""
+    return int(y * _SCREEN_H / _REF_H)
+
+def scale_xy(x: int, y: int) -> tuple:
+    """坐标缩放"""
+    return scale_x(x), scale_y(y)
+
+def scale_size(s: int) -> int:
+    """尺寸缩放（取水平和垂直的均值）"""
+    return int(s * (_SCREEN_W + _SCREEN_H) / (_REF_W + _REF_H))
+
+# 当前分辨率常量
+CURRENT_W, CURRENT_H = _SCREEN_W, _SCREEN_H
 TELEPORT = TeleportConfig()
