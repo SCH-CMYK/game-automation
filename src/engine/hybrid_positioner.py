@@ -73,9 +73,9 @@ class HybridPositioner:
         donut = self.make_donut_mask(h, w)
         minimap_masked = cv2.bitwise_and(minimap_bgr, minimap_bgr, mask=donut)
 
-        # 2. 局部搜索区域（和参考项目一样：±200px 窗口）
+        # 2. 局部搜索区域（扩大窗口应对战斗后远跳）
         lx, ly = int(self._last_pos[0]), int(self._last_pos[1])
-        r = 200
+        r = 400
         x1, y1 = max(0, lx - r), max(0, ly - r)
         x2, y2 = min(self.map_w, lx + r), min(self.map_h, ly + r)
         local = self.map_bgr[y1:y2, x1:x2]
@@ -101,8 +101,8 @@ class HybridPositioner:
         k1 = output['keypoints1'].cpu().numpy()
         conf = output['confidence'].cpu().numpy()
 
-        # 5. 过滤 + 单应性
-        good = conf.flatten() > 0.3
+        # 5. 过滤 + 单应性（降低门槛提高匹配率）
+        good = conf.flatten() > 0.2
         k0 = k0[good]
         k1 = k1[good]
 
@@ -120,7 +120,7 @@ class HybridPositioner:
         fx, fy = float(pos[0][0][0]) + x1, float(pos[0][0][1]) + y1
 
         inlier = np.sum(mask) / len(mask)
-        if inlier < 0.5:
+        if inlier < 0.3:
             logger.warning(f"LoFTR 内点不足: {inlier:.2f}")
             return self._last_pos
 

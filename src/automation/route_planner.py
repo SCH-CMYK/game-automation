@@ -439,11 +439,13 @@ class RoutePlanner:
         if hasattr(self, '_hybrid_positioner') and self._hybrid_positioner is not None:
             pos = self._hybrid_positioner.get_position(minimap)
             if pos is not None:
-                # 跳变过滤：突然跳 >100px → 忽略
+                # 跳变过滤：突然跳 >100px → 忽略（战斗/采矿后宽限 500px）
                 if self._last_pos is not None:
                     jump = distance_2d(pos, self._last_pos)
-                    if jump > 100:
-                        return self._last_pos  # 保持上次位置
+                    max_jump = 500 if getattr(self, '_just_recovered', False) else 100
+                    if jump > max_jump:
+                        return self._last_pos
+                self._just_recovered = False
                 self._last_pos = pos
                 return pos
 
@@ -569,7 +571,7 @@ class RoutePlanner:
             mm = self.grab_minimap(frame)
             pos = self.get_position(mm)
             if pos is None:
-                time.sleep(0.05)
+                time.sleep(0.03)
                 continue
 
             # 2. 战斗检测（每帧，最高优先级）
@@ -638,6 +640,7 @@ class RoutePlanner:
                     self._last_pos = (float(tx), float(ty))
                     prev_pos = (float(tx), float(ty))
 
+                self._just_recovered = True
                 self._stuck_frames = 0
                 import gc; gc.collect()
                 self.controller.key_down('w')
@@ -676,6 +679,7 @@ class RoutePlanner:
                     # 采矿后恢复：扫小地图 + 探测朝向 + 转向目标
                     self._last_pos = self._recover_position(tx, ty)
                     prev_pos = (self._last_pos[0], self._last_pos[1])
+                    self._just_recovered = True
                     self._stuck_frames = 0
                     self.controller.key_down('w')
                     self.controller.key_down('shift')
@@ -731,7 +735,7 @@ class RoutePlanner:
                 continue
 
             prev_pos = (px_now, py_now)
-            time.sleep(0.08)
+            time.sleep(0.05)
 
         self._stop_walk()
         if not self.running:
