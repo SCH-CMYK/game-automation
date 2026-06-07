@@ -644,7 +644,7 @@ class RoutePlanner:
                 logger.info(f"  到达 {name}! dist={dist:.0f}")
                 break
 
-            # 6. 转向
+            # 6. 转向（位置法）或箭头转向（降级）
             if prev_pos and (px_now != prev_pos[0] or py_now != prev_pos[1]):
                 actual_angle = math.degrees(math.atan2(px_now - prev_pos[0], -(py_now - prev_pos[1])))
                 desired_angle = math.degrees(math.atan2(dx, -dy))
@@ -653,8 +653,18 @@ class RoutePlanner:
                 while correction < -180: correction += 360
                 if abs(correction) > 2:
                     turn = int(correction * 8.0)
-                    turn = max(-300, min(300, turn))
                     self.controller.move_relative(max(-300, min(300, turn)), 0)
+            elif step % 3 == 0 and mm is not None:
+                # CPU 上位置更新慢 → 用箭头朝向兜底
+                heading = self.get_arrow_heading(mm)
+                if heading is not None:
+                    desired = math.degrees(math.atan2(dx, -dy))
+                    correction = desired - heading
+                    while correction > 180: correction -= 360
+                    while correction < -180: correction += 360
+                    if abs(correction) > 5:
+                        turn = int(correction * 6.0)
+                        self.controller.move_relative(max(-200, min(200, turn)), 0)
 
             if step % 5 == 0:
                 logger.info(f"  [{step}] ({int(px_now)},{int(py_now)}) dist={dist:.0f}")
