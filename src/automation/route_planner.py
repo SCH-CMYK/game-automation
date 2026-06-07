@@ -581,7 +581,8 @@ class RoutePlanner:
             battle_ok = time.time() - getattr(self, '_last_battle_time', 0) > 8.0
             if in_battle and battle_ok:
                 logger.info("  进入战斗，退出中...")
-                time.sleep(1.5)
+                # 等待战斗动画加载完成（踩到怪后约 3s 才能按 ESC）
+                time.sleep(3.0)
                 self._stop_walk()
                 self._escape_battle(frame)
                 self._last_battle_time = time.time()
@@ -589,24 +590,24 @@ class RoutePlanner:
                 # 等待小地图恢复 + LoFTR 定位真实位置
                 logger.info("  战斗后等待小地图恢复...")
                 real_pos = None
-                for _ in range(15):
-                    time.sleep(0.3)
+                for attempt in range(20):
+                    time.sleep(0.4)
                     f2 = self.capture.grab()
                     mm = self.grab_minimap(f2)
                     if mm is not None and self._hybrid_positioner:
-                        self._minimap_detector.reset()
-                        r2 = self._minimap_detector.detect(f2)
-                        if r2 and r2[0] >= 1700 and r2[1] <= 200:
-                            # 小地图回来了（右上角正常位置）
-                            p = self._hybrid_positioner.get_position(mm)
-                            if p is not None:
-                                real_pos = p
-                                logger.info(f"  战斗后真实位置: ({int(p[0])}, {int(p[1])})")
-                                break
-                    # 走一小步触发画面
-                    if _ == 3:
+                        # 不检查小地图位置，只要 LoFTR 能匹配就认
+                        self._hybrid_positioner.init_position(
+                            self.waypoints[self.current_wp_idx][0],
+                            self.waypoints[self.current_wp_idx][1])
+                        p = self._hybrid_positioner.get_position(mm)
+                        if p is not None:
+                            real_pos = p
+                            logger.info(f"  战斗后真实位置: ({int(p[0])}, {int(p[1])})")
+                            break
+                    # 走一步触发画面刷新
+                    if attempt == 5:
                         self.controller.key_down('w')
-                        time.sleep(0.3)
+                        time.sleep(0.4)
                         self.controller.key_up('w')
 
                 # 找到真实位置 → 纠正到最近未到达的节点

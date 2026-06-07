@@ -120,7 +120,7 @@ class HybridPositioner:
         fx, fy = float(pos[0][0][0]) + x1, float(pos[0][0][1]) + y1
 
         inlier = np.sum(mask) / len(mask)
-        if inlier < 0.3:
+        if inlier < 0.15:
             logger.warning(f"LoFTR 内点不足: {inlier:.2f}")
             return self._last_pos
 
