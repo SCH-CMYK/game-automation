@@ -8,7 +8,10 @@ import cv2
 import numpy as np
 import torch
 import kornia as K
-from kornia.feature import LoFTR
+try:
+    from kornia.feature import LoFTR
+except ImportError:
+    from kornia.feature.loftr import LoFTR
 import logging
 
 # 修复某些网络环境下下载 LoFTR 模型时 SSL 证书验证失败
@@ -37,12 +40,17 @@ class HybridPositioner:
         logger.info(f"Kornia LoFTR 定位引擎 (outdoor, {self.device}, 和参考项目一致)")
 
     def _loftr_preprocess(self, img_bgr):
-        """预处理 — 和 tracker_engine.py 一模一样"""
+        """预处理"""
         img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
         h, w = img_gray.shape
         new_h, new_w = h - (h % 8), w - (w % 8)
         img_gray = cv2.resize(img_gray, (new_w, new_h))
-        tensor = K.image_to_tensor(img_gray, False).float() / 255.0
+        # 兼容 kornia 新旧版本 API
+        try:
+            from kornia.image import image_to_tensor
+            tensor = image_to_tensor(img_gray, False).float() / 255.0
+        except ImportError:
+            tensor = K.image_to_tensor(img_gray, False).float() / 255.0
         return tensor.to(self.device)
 
     def make_donut_mask(self, h, w):
@@ -91,11 +99,13 @@ class HybridPositioner:
         mini_tensor = self._loftr_preprocess(minimap_masked)
         local_tensor = self._loftr_preprocess(local)
 
-        # 4. LoFTR 匹配（和 tracker_engine.py 一模一样）
+        # 4. LoFTR 匹配（GPU 用 autocast，CPU 直接跑）
         try:
             with torch.no_grad():
-                dtype = torch.float16 if self.device.type == 'cuda' else torch.float32
-                with torch.autocast(device_type=self.device.type, dtype=dtype):
+                if self.device.type == 'cuda':
+                    with torch.autocast(device_type='cuda', dtype=torch.float16):
+                        output = self.loftr({"image0": mini_tensor, "image1": local_tensor})
+                else:
                     output = self.loftr({"image0": mini_tensor, "image1": local_tensor})
         except Exception as e:
             logger.warning(f"LoFTR 异常: {e}")
