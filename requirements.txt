@@ -9,3 +9,4 @@ pywin32>=306
 Pillow>=10.0.0
 pyyaml>=6.0
 pynput>=1.7.0
+kornia>=0.7.0
