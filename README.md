@@ -68,6 +68,22 @@ maps/
 
 ---
 
+## 安装 Interception 驱动 ⚠️ 必装
+
+程序依赖 Interception 内核驱动来控制键鼠（非内存修改，反作弊安全）。
+
+1. 下载 [Interception.zip](https://github.com/oblitum/Interception/releases/latest)
+2. 解压，**以管理员身份运行 cmd**，进入解压目录
+3. 执行安装：
+   ```cmd
+   install-interception.exe /install
+   ```
+4. **重启电脑**
+
+> 安装后 `sc query interception` 看到 RUNNING 即成功
+
+---
+
 ## 快速开始
 
 ```bash

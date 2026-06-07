@@ -28,8 +28,19 @@ class Controller:
         self.speed = move_speed
         self._input_lock = threading.Lock()
         if not Controller._initialized:
-            interception.auto_capture_devices()
-            Controller._initialized = True
+            try:
+                interception.auto_capture_devices()
+                Controller._initialized = True
+            except Exception as e:
+                raise RuntimeError(
+                    "\n❌ Interception 驱动未安装！\n"
+                    "请执行以下步骤：\n"
+                    "  1. 下载驱动：https://github.com/oblitum/Interception/releases\n"
+                    "  2. 解压后右键「以管理员身份运行」cmd\n"
+                    "  3. 执行: install-interception.exe /install\n"
+                    "  4. 重启电脑\n"
+                    f"详细错误: {e}"
+                )
 
     def acquire_lock(self):
         """获取输入锁（用于多线程原子操作）"""
