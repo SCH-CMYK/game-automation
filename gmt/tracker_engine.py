@@ -1,8 +1,11 @@
+import ssl
 import cv2
 import numpy as np
 import torch
 import kornia as K
 from kornia.feature import LoFTR
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 class LoftrEngine:
     def __init__(self, device):

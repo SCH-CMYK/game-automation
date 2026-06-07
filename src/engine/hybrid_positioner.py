@@ -3,12 +3,16 @@
 
 使用 Kornia LoFTR（和参考项目一模一样），不是 ONNX
 """
+import ssl
 import cv2
 import numpy as np
 import torch
 import kornia as K
 from kornia.feature import LoFTR
 import logging
+
+# 修复某些网络环境下下载 LoFTR 模型时 SSL 证书验证失败
+ssl._create_default_https_context = ssl._create_unverified_context
 
 logger = logging.getLogger("gameauto.hybrid_pos")
 
