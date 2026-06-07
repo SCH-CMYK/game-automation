@@ -20,6 +20,10 @@ from src.utils.logger import get_logger, install_crash_handler
 logger = get_logger("gameauto.main")
 install_crash_handler()
 
+# 检查分辨率变更
+from src.utils.config import check_resolution_change
+check_resolution_change()
+
 from src.engine.screen_capture import ScreenCapture
 from src.engine.vision_engine import VisionEngine
 from src.engine.controller import Controller

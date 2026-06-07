@@ -147,6 +147,39 @@ def _detect_resolution():
 
 _SCREEN_W, _SCREEN_H = _detect_resolution()
 
+def check_resolution_change():
+    """检测分辨率是否变更，变了就清除旧校准文件"""
+    import json
+    from pathlib import Path
+    res_file = APP.project_dir / "resolution.json"
+    current = {"w": _SCREEN_W, "h": _SCREEN_H}
+    changed = False
+
+    if res_file.exists():
+        try:
+            with open(res_file, encoding="utf-8") as f:
+                saved = json.load(f)
+            if saved.get("w") != _SCREEN_W or saved.get("h") != _SCREEN_H:
+                changed = True
+        except Exception:
+            changed = True
+    else:
+        changed = True  # 首次运行
+
+    if changed:
+        # 清除旧校准
+        mm_file = APP.project_dir / "minimap_region.json"
+        if mm_file.exists():
+            mm_file.unlink()
+        # 保存新分辨率
+        with open(res_file, "w", encoding="utf-8") as f:
+            json.dump(current, f)
+        import logging
+        logging.getLogger("gameauto.config").info(
+            f"分辨率变更为 {_SCREEN_W}x{_SCREEN_H}，已重置校准")
+
+    return changed
+
 def scale_x(x: int) -> int:
     """水平坐标缩放"""
     return int(x * _SCREEN_W / _REF_W)

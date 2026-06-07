@@ -43,6 +43,7 @@ models/*.onnx
 
 # User data
 minimap_region.json
+resolution.json
 codegraph.db
 .pytest_cache/
 
