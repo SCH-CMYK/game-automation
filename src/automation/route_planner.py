@@ -583,14 +583,17 @@ class RoutePlanner:
                 self._stop_walk()
                 self._escape_battle(frame)
                 self._last_battle_time = time.time()
+                # 强制跳到下一个节点（不浪费时间去 LoFTR 恢复）
                 if self.current_wp_idx + 1 < len(self.waypoints):
                     self.current_wp_idx += 1
-                    tx, ty = self.waypoints[self.current_wp_idx][0], self.waypoints[self.current_wp_idx][1]
-                    name = self.waypoints[self.current_wp_idx][2]
-                    logger.info(f"  战斗后跳至 [{self.current_wp_idx}] {name}")
-                # 恢复定位：扫小地图 + 探测朝向 + 转向目标
-                self._last_pos = self._recover_position(tx, ty)
-                prev_pos = (self._last_pos[0], self._last_pos[1])
+                tx, ty = self.waypoints[self.current_wp_idx][0], self.waypoints[self.current_wp_idx][1]
+                name = self.waypoints[self.current_wp_idx][2]
+                logger.info(f"  战斗后强制跳至 [{self.current_wp_idx}] {name} ({tx},{ty})")
+                # 直接设位置为节点坐标，让导航从这儿开始
+                self._last_pos = (float(tx), float(ty))
+                if hasattr(self, '_hybrid_positioner') and self._hybrid_positioner:
+                    self._hybrid_positioner.init_position(tx, ty)
+                prev_pos = (float(tx), float(ty))
                 self._stuck_frames = 0
                 import gc; gc.collect()
                 self.controller.key_down('w')
