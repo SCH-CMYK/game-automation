@@ -20,18 +20,19 @@ class MinimapDetector:
     """基于霍夫圆检测的自动小地图定位"""
 
     def __init__(self):
-        # 检测参数
-        self._dp = 1.2              # 分辨率比率
-        self._min_dist = 150        # 圆之间最小距离
-        self._param1 = 100          # Canny 高阈值
-        self._param2 = 25           # 累加器阈值（越小越灵敏）
-        self._min_radius = 60       # 最小半径
-        self._max_radius = 110      # 最大半径
+        from src.utils.config import scale_size
+        # 检测参数（按分辨率缩放）
+        self._dp = 1.2
+        self._min_dist = scale_size(150)
+        self._param1 = 100
+        self._param2 = 25
+        self._min_radius = scale_size(60)
+        self._max_radius = scale_size(110)
 
         # 搜索区域（小地图一般在右上角 1/3）
-        self._roi_top_ratio = 0.0    # 从顶部 0% 开始
-        self._roi_bottom_ratio = 0.4 # 到 40% 为止
-        self._roi_left_ratio = 0.5   # 从左 50% 开始
+        self._roi_top_ratio = 0.0
+        self._roi_bottom_ratio = 0.4
+        self._roi_left_ratio = 0.5
 
         # 缓存
         self._cached_region = None   # (x, y, w, h) 上次检测结果
