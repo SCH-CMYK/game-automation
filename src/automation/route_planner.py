@@ -481,12 +481,10 @@ class RoutePlanner:
             self.running = False
 
     def _recover_position(self, target_x, target_y):
-        """脱离战斗/采矿后定位 + 探测朝向 + 转向目标"""
+        """采矿后快速定位（不走路、不探测朝向，只做 LoFTR）"""
         self._walk_held = False
-        pos = None
-
-        # 1. 等 UI 消失 + 小地图恢复，尝试 LoFTR 定位
-        for attempt in range(6):
+        # 快速尝试 LoFTR 定位，最多 4 次
+        for attempt in range(4):
             time.sleep(0.15)
             frame = self.capture.grab()
             mm = self.grab_minimap(frame)
@@ -494,51 +492,11 @@ class RoutePlanner:
                 self._hybrid_positioner.init_position(target_x, target_y)
                 p = self._hybrid_positioner.get_position(mm)
                 if p is not None:
-                    pos = p
-                    logger.info(f"  恢复定位成功: ({int(pos[0])}, {int(pos[1])})")
-                    break
-            if attempt == 2:
-                self.controller.key_down('w')
-                time.sleep(0.3)
-                self.controller.key_up('w')
-
-        if pos is None:
-            pos = (float(target_x), float(target_y))
-            logger.info(f"  恢复定位超时，使用回退: ({int(pos[0])}, {int(pos[1])})")
-
-        # 2. 探测朝向：走一小步看坐标往哪变
-        px, py = pos
-        self.controller.key_down('w')
-        time.sleep(0.15)
-        self.controller.key_up('w')
-        time.sleep(0.1)
-        # 再取一次位置
-        f2 = self.capture.grab()
-        mm2 = self.grab_minimap(f2)
-        if mm2 is not None and self._hybrid_positioner:
-            p2 = self._hybrid_positioner.get_position(mm2)
-            if p2 is not None:
-                dx = p2[0] - px
-                dy = p2[1] - py
-                if abs(dx) > 1 or abs(dy) > 1:
-                    # 当前朝向角度
-                    facing = math.degrees(math.atan2(dx, -dy))
-                    # 朝向目标角度
-                    desired = math.degrees(math.atan2(target_x - px, -(target_y - py)))
-                    correction = desired - facing
-                    while correction > 180: correction -= 360
-                    while correction < -180: correction += 360
-                    if abs(correction) > 10:
-                        turn = int(correction * 25.0)
-                        turn = max(-500, min(500, turn))
-                        logger.info(f"  转向纠正: {correction:.0f}° (朝向{facing:.0f}→目标{desired:.0f})")
-                        self.controller.move_relative(turn, 0)
-                        time.sleep(0.2)
-                        self.controller.move_relative(turn, 0)
-                        time.sleep(0.2)
-                    pos = p2  # 用最新位置
-
-        return pos
+                    logger.info(f"  恢复定位成功: ({int(p[0])}, {int(p[1])})")
+                    return p
+        # 失败了用目标坐标兜底
+        logger.info(f"  恢复定位失败，使用目标坐标")
+        return (float(target_x), float(target_y))
 
     def _stop_walk(self):
         if self._walk_held:
@@ -581,65 +539,53 @@ class RoutePlanner:
             battle_ok = time.time() - getattr(self, '_last_battle_time', 0) > 8.0
             if in_battle and battle_ok:
                 logger.info("  进入战斗，退出中...")
-                # 等待战斗动画加载完成（踩到怪后约 3s 才能按 ESC）
-                time.sleep(3.0)
                 self._stop_walk()
+                # 等动画播完（9s），期间不按任何键
+                time.sleep(9.0)
                 self._escape_battle(frame)
                 self._last_battle_time = time.time()
 
-                # 等待小地图恢复 + LoFTR 定位真实位置
-                logger.info("  战斗后等待小地图恢复...")
-                real_pos = None
-                for attempt in range(20):
-                    time.sleep(0.4)
+                # 严格按路线走：跳到下一个节点
+                self.current_wp_idx += 1
+                tx, ty = self.waypoints[self.current_wp_idx][0], self.waypoints[self.current_wp_idx][1]
+                name = self.waypoints[self.current_wp_idx][2]
+                logger.info(f"  战斗后前往 [{self.current_wp_idx}] {name} ({tx},{ty})")
+
+                # 等小地图出现，用箭头检测朝向 → 转头对准目标
+                for _ in range(20):
+                    time.sleep(0.3)
                     f2 = self.capture.grab()
                     mm = self.grab_minimap(f2)
-                    if mm is not None and self._hybrid_positioner:
-                        # 不检查小地图位置，只要 LoFTR 能匹配就认
-                        self._hybrid_positioner.init_position(
-                            self.waypoints[self.current_wp_idx][0],
-                            self.waypoints[self.current_wp_idx][1])
-                        p = self._hybrid_positioner.get_position(mm)
-                        if p is not None:
-                            real_pos = p
-                            logger.info(f"  战斗后真实位置: ({int(p[0])}, {int(p[1])})")
+                    if mm is not None:
+                        heading = self.get_arrow_heading(mm)
+                        if heading is not None:
+                            # 用之前的位置作起点，算目标方向
+                            if self._last_pos is not None:
+                                px, py = self._last_pos
+                            else:
+                                px, py = tx, ty
+                            desired = math.degrees(math.atan2(tx - px, -(ty - py)))
+                            correction = desired - heading
+                            while correction > 180: correction -= 360
+                            while correction < -180: correction += 360
+                            if abs(correction) > 5:
+                                turn = int(correction * 12.0)
+                                turn = max(-400, min(400, turn))
+                                logger.info(f"  战斗后转头: {correction:.0f}° (朝向{heading:.0f}→目标{desired:.0f})")
+                                self.controller.move_relative(turn, 0)
+                                time.sleep(0.3)
                             break
-                    # 走一步触发画面刷新
-                    if attempt == 5:
-                        self.controller.key_down('w')
-                        time.sleep(0.4)
-                        self.controller.key_up('w')
+                        # 箭头还没出来，走半步触发
+                        if _ == 3:
+                            self.controller.key_down('w')
+                            time.sleep(0.2)
+                            self.controller.key_up('w')
 
-                # 找到真实位置 → 纠正到最近未到达的节点
-                if real_pos is not None:
-                    px, py = real_pos
-                    # 跳过已到达的节点，从当前位置找最近的
-                    best_dist = float('inf')
-                    best_idx = self.current_wp_idx
-                    for i in range(self.current_wp_idx, len(self.waypoints)):
-                        wx, wy = self.waypoints[i][0], self.waypoints[i][1]
-                        d = math.hypot(px - wx, py - wy)
-                        if d < best_dist:
-                            best_dist = d
-                            best_idx = i
-                    # 跳过当前节点（至少走下一个）
-                    if best_idx == self.current_wp_idx and best_idx + 1 < len(self.waypoints):
-                        best_idx = self.current_wp_idx + 1
-                    self.current_wp_idx = best_idx
-                    tx, ty = self.waypoints[best_idx][0], self.waypoints[best_idx][1]
-                    logger.info(f"  纠正到节点 [{best_idx}] {self.waypoints[best_idx][2]} ({tx},{ty}) dist={best_dist:.0f}")
-                    self._last_pos = real_pos
-                    if self._hybrid_positioner:
-                        self._hybrid_positioner.init_position(px, py)
-                    prev_pos = (px, py)
-                else:
-                    # LoFTR 失败 → 跳到下一个节点兜底
-                    if self.current_wp_idx + 1 < len(self.waypoints):
-                        self.current_wp_idx += 1
-                    tx, ty = self.waypoints[self.current_wp_idx][0], self.waypoints[self.current_wp_idx][1]
-                    logger.info(f"  战斗后兜底跳至 [{self.current_wp_idx}] {self.waypoints[self.current_wp_idx][2]}")
-                    self._last_pos = (float(tx), float(ty))
-                    prev_pos = (float(tx), float(ty))
+                # 设位置为目标坐标，导航系统会逐步修正
+                self._last_pos = (float(tx), float(ty))
+                if self._hybrid_positioner:
+                    self._hybrid_positioner.init_position(tx, ty)
+                prev_pos = (float(tx), float(ty))
 
                 self._just_recovered = True
                 self._stuck_frames = 0
@@ -677,9 +623,23 @@ class RoutePlanner:
                     logger.info("  矿！")
                     self._stop_walk()
                     self._quick_mine(automator, frame)
-                    # 采矿后恢复：扫小地图 + 探测朝向 + 转向目标
-                    self._last_pos = self._recover_position(tx, ty)
-                    prev_pos = (self._last_pos[0], self._last_pos[1])
+                    # 采矿后恢复：LoFTR 定位 + 箭头转向
+                    pos = self._recover_position(tx, ty)
+                    self._last_pos = pos
+                    # 箭头检测朝向 → 转头对准下一个节点
+                    mm2 = self.grab_minimap(frame)
+                    heading = self.get_arrow_heading(mm2) if mm2 is not None else None
+                    if heading is not None:
+                        desired = math.degrees(math.atan2(tx - pos[0], -(ty - pos[1])))
+                        correction = desired - heading
+                        while correction > 180: correction -= 360
+                        while correction < -180: correction += 360
+                        if abs(correction) > 5:
+                            turn = int(correction * 12.0)
+                            logger.info(f"  采矿后转头: {correction:.0f}°")
+                            self.controller.move_relative(max(-400, min(400, turn)), 0)
+                            time.sleep(0.2)
+                    prev_pos = (pos[0], pos[1])
                     self._just_recovered = True
                     self._stuck_frames = 0
                     self.controller.key_down('w')
@@ -700,7 +660,8 @@ class RoutePlanner:
                 while correction > 180: correction -= 360
                 while correction < -180: correction += 360
                 if abs(correction) > 2:
-                    turn = int(correction * 20.0)
+                    turn = int(correction * 8.0)
+                    turn = max(-300, min(300, turn))
                     self.controller.move_relative(max(-300, min(300, turn)), 0)
 
             if step % 5 == 0:
@@ -714,21 +675,37 @@ class RoutePlanner:
             else:
                 self._stuck_frames = 0
 
-            if self._stuck_frames > 15:
+            if self._stuck_frames > 20:
                 logger.warning(f"  卡住了！自救 ({self._stuck_frames}帧)")
                 self._stop_walk()
-                # 随机转身 90-270 度
-                turn = 200 + int(random.random() * 180)
-                if random.random() > 0.5: turn = -turn
-                self.controller.move_relative(turn, 0)
-                time.sleep(0.3)
+                # 用箭头检测当前朝向，转头对准目标
+                f3 = self.capture.grab()
+                mm3 = self.grab_minimap(f3)
+                heading = self.get_arrow_heading(mm3) if mm3 is not None else None
+                if heading is not None and self._last_pos is not None:
+                    desired = math.degrees(math.atan2(tx - self._last_pos[0], -(ty - self._last_pos[1])))
+                    correction = desired - heading
+                    while correction > 180: correction -= 360
+                    while correction < -180: correction += 360
+                    turn = int(correction * 12.0)
+                    turn = max(-400, min(400, turn))
+                    logger.info(f"  自救转头: {correction:.0f}°")
+                    self.controller.move_relative(turn, 0)
+                    time.sleep(0.3)
+                else:
+                    # 箭头检测失败，随机转身
+                    turn = 200 + int(random.random() * 180)
+                    if random.random() > 0.5: turn = -turn
+                    self.controller.move_relative(turn, 0)
+                    time.sleep(0.3)
                 # 往前走一段
                 self.controller.key_down('w')
                 time.sleep(0.5)
                 self.controller.key_up('w')
                 # 重定位
-                self._last_pos = self._recover_position(tx, ty)
-                prev_pos = (self._last_pos[0], self._last_pos[1])
+                pos = self._recover_position(tx, ty)
+                self._last_pos = pos
+                prev_pos = (pos[0], pos[1])
                 self._stuck_frames = 0
                 self.controller.key_down('w')
                 self.controller.key_down('shift')
@@ -736,7 +713,7 @@ class RoutePlanner:
                 continue
 
             prev_pos = (px_now, py_now)
-            time.sleep(0.05)
+            time.sleep(0.1)
 
         self._stop_walk()
         if not self.running:
