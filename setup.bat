@@ -110,7 +110,7 @@ echo.
 :: ===========================================
 :: 5. Download model files
 :: ===========================================
-echo [5/5] Downloading model and map files ...
+echo [5/6] Downloading model and map files ...
 python download_models.py
 if %errorlevel% neq 0 (
     echo [WARN] Some model downloads failed
@@ -125,27 +125,67 @@ if %errorlevel% neq 0 (
 echo.
 
 :: ===========================================
-:: 6. Interception driver check
+:: 6. Interception driver (auto-install)
 :: ===========================================
-echo ========================================
-echo    Interception Driver Check
-echo ========================================
-echo.
+echo [6/6] Interception driver ...
 
 sc query interception >nul 2>&1
 if %errorlevel% equ 0 (
-    echo [OK] Interception driver is running
+    echo [OK] Interception driver already installed and running
+    goto :summary
+)
+
+echo   Driver not found. Auto-installing ...
+echo.
+
+:: Create temp directory
+set "TEMP_DIR=%TEMP%\interception_install"
+if exist "%TEMP_DIR%" rmdir /s /q "%TEMP_DIR%"
+mkdir "%TEMP_DIR%"
+
+:: Download Interception
+echo   [1/3] Downloading Interception v1.0.1 ...
+powershell -Command "Invoke-WebRequest -Uri 'https://github.com/oblitum/Interception/releases/download/v1.0.1/Interception.zip' -OutFile '%TEMP_DIR%\Interception.zip'" 2>nul
+if %errorlevel% neq 0 (
+    echo   [FAIL] Download failed. Please install manually:
+    echo     https://github.com/oblitum/Interception/releases/latest
+    goto :summary
+)
+
+:: Extract
+echo   [2/3] Extracting ...
+powershell -Command "Expand-Archive -Path '%TEMP_DIR%\Interception.zip' -DestinationPath '%TEMP_DIR%' -Force" 2>nul
+if %errorlevel% neq 0 (
+    echo   [FAIL] Extraction failed. Please install manually.
+    goto :summary
+)
+
+:: Find and run installer
+echo   [3/3] Installing driver ...
+set "INSTALLER="
+for /r "%TEMP_DIR%" %%f in (install-interception.exe) do (
+    if exist "%%f" set "INSTALLER=%%f"
+)
+if "%INSTALLER%"=="" (
+    echo   [FAIL] install-interception.exe not found in zip
+    goto :summary
+)
+
+"%INSTALLER%" /install
+if %errorlevel% equ 0 (
+    echo   [OK] Interception driver installed!
+    echo.
+    echo   +====================================================+
+    echo   ^|  REBOOT REQUIRED!                                  ^|
+    echo   ^|  Please restart your computer before using GameAuto ^|
+    echo   +====================================================+
 ) else (
-    echo [WARN] Interception driver NOT installed!
-    echo.
-    echo This kernel driver is required for keyboard/mouse control.
-    echo Installation steps:
-    echo.
-    echo   1. Download: https://github.com/oblitum/Interception/releases/latest
-    echo   2. Extract, open cmd as Administrator in that folder
-    echo   3. Run: install-interception.exe /install
-    echo   4. Restart your computer
-    echo.
+    echo   [FAIL] Driver installation failed (error %errorlevel%)
+    echo   Please install manually from %TEMP_DIR%
+)
+
+:: Cleanup
+rmdir /s /q "%TEMP_DIR%" 2>nul
     echo Verify: sc query interception should show RUNNING
 )
 echo.
