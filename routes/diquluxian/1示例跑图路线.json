@@ -1,0 +1,37 @@
+{
+  "name": "1\u793A\u4F8B\u8DD1\u56FE\u8DEF\u7EBF",
+  "loop": false,
+  "notes": "\u8DEF\u7EBF\u5750\u6807\u57FA\u4E8E\u5730\u56FE\u50CF\u7D20\u5750\u6807\uFF0C\u4EC5\u7528\u4E8E\u622A\u56FE\u8BC6\u522B\u5BFC\u822A\uFF0C\u4E0D\u8BBE\u8BA1\u4EFB\u4F55\u6E38\u620F\u5185\u5B58\u8BFB\u53D6\u3002",
+  "points": [
+    {
+      "x": 1598,
+      "y": 4153,
+      "label": "\u8282\u70B9 1",
+      "radius": 30
+    },
+    {
+      "x": 1515,
+      "y": 4110,
+      "label": "\u8282\u70B9 2",
+      "radius": 30
+    },
+    {
+      "x": 1504,
+      "y": 3988,
+      "label": "\u8282\u70B9 3",
+      "radius": 30
+    },
+    {
+      "x": 1614,
+      "y": 3944,
+      "label": "\u8282\u70B9 4",
+      "radius": 30
+    },
+    {
+      "x": 1645,
+      "y": 3993,
+      "label": "\u8282\u70B9 5",
+      "radius": 30
+    }
+  ]
+}

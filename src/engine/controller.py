@@ -7,16 +7,63 @@ import random
 import time
 import threading
 import logging
+from pathlib import Path
 from typing import Tuple, Optional
 
 logger = logging.getLogger("gameauto.controller")
 
-# Python 3.8+ 限制 DLL 加载路径，需显式添加项目目录
-_project_dir = os.path.dirname(os.path.abspath(__file__))
+# Python 3.8+ 限制 DLL 加载路径，需显式添加项目根目录
+# interception.dll 位于项目根目录，不在 src/engine/
+_project_root = Path(__file__).parent.parent.parent.resolve()
 if hasattr(os, "add_dll_directory"):
-    os.add_dll_directory(_project_dir)
+    os.add_dll_directory(str(_project_root))
+    os.add_dll_directory(str(_project_root / "src" / "engine"))
 
-import interception
+_IMPORT_ERROR_HELP = """
++====================================================+
+|  Interception driver not installed or misconfigured |
++====================================================+
+|                                                    |
+|  This program requires the Interception kernel      |
+|  driver to control keyboard and mouse.              |
+|                                                    |
+|  Installation steps:                                |
+|    1. Download driver:                              |
+|       github.com/oblitum/Interception/releases      |
+|    2. Extract, run cmd as Administrator             |
+|    3. Run: install-interception.exe /install        |
+|    4. Restart your computer                         |
+|                                                    |
+|  Verify installation:                               |
+|    sc query interception   -> should show RUNNING   |
+|                                                    |
+|  If driver is installed but still failing:           |
+|    -- Run this program as Administrator             |
+|    -- Make sure interception.dll is in project root |
+|    -- Make sure interception-python is installed    |
+|                                                    |
++====================================================+
+"""
+
+# 提前检查 interception.dll 是否存在
+_dll_path = _project_root / "interception.dll"
+if not _dll_path.exists():
+    raise RuntimeError(
+        f"\n[ERROR] 找不到 interception.dll\n"
+        f"   预期位置: {_dll_path}\n"
+        f"   请确保 interception.dll 在项目根目录。\n"
+        f"{_IMPORT_ERROR_HELP}"
+    )
+
+try:
+    import interception
+except ImportError as e:
+    raise ImportError(
+        f"\n[ERROR] 无法导入 interception-python 包\n"
+        f"   请运行: pip install interception-python\n"
+        f"   详细错误: {e}\n"
+        f"{_IMPORT_ERROR_HELP}"
+    )
 
 
 class Controller:
@@ -33,13 +80,13 @@ class Controller:
                 Controller._initialized = True
             except Exception as e:
                 raise RuntimeError(
-                    "\n❌ Interception 驱动未安装！\n"
-                    "请执行以下步骤：\n"
-                    "  1. 下载驱动：https://github.com/oblitum/Interception/releases\n"
-                    "  2. 解压后右键「以管理员身份运行」cmd\n"
-                    "  3. 执行: install-interception.exe /install\n"
-                    "  4. 重启电脑\n"
-                    f"详细错误: {e}"
+                    f"\n[ERROR] Interception 驱动初始化失败！\n\n"
+                    f"可能原因：\n"
+                    f"  1. 驱动未安装 → 运行 install-interception.exe /install 并重启\n"
+                    f"  2. 驱动未运行 → 以管理员身份运行本程序\n"
+                    f"  3. 设备被占用 → 关闭其他使用 Interception 的程序\n\n"
+                    f"详细错误: {e}\n"
+                    f"{_IMPORT_ERROR_HELP}"
                 )
 
     def acquire_lock(self):

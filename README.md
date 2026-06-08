@@ -36,27 +36,50 @@
 
 ---
 
-## 安装
+## 🚀 快速开始（3 步）
+
+```bash
+# 1. 克隆仓库
+git clone https://github.com/SCH-CMYK/game-automation.git
+cd game-automation
+
+# 2. 一键安装（右键 setup.bat → 以管理员身份运行）
+setup.bat
+
+# 3. 启动
+run.bat
+```
+
+> `setup.bat` 会自动完成：依赖安装 → 模型下载 → 驱动检查
+
+---
+
+## 手动安装
 
 ```bash
 git clone https://github.com/SCH-CMYK/game-automation.git
 cd game-automation
+
+# 创建虚拟环境
+python -m venv .venv
+.venv\Scripts\activate
+
+# 安装依赖
 pip install -r requirements.txt
+
+# 自动下载模型和地图文件
+python download_models.py
 ```
 
-或下载 ZIP + 双击 `setup.bat`
+### 模型文件
 
----
+| 文件 | 用途 | 大小 | 自动下载 |
+|------|------|------|---------|
+| `best_20260601.pt` | YOLO 检测模型 | 18 MB | `python download_models.py` |
+| `loftr_model.onnx` | LoFTR 定位模型 | 37 MB | `python download_models.py` |
+| `big_map.png` | 游戏大地图 (8192×8192) | 3 MB | `python download_models.py` |
 
-## 模型下载
-
-模型和地图文件较大，从 Releases 下载后放入对应目录：
-
-| 文件 | 用途 | 大小 | 下载 |
-|------|------|------|------|
-| `best_20260601.pt` | YOLO 检测模型 | 18 MB | [⬇ 下载](https://github.com/SCH-CMYK/game-automation/releases/download/v1.0/best_20260601.pt) |
-| `loftr_model.onnx` | LoFTR 定位模型 | 37 MB | [⬇ 下载](https://github.com/SCH-CMYK/game-automation/releases/download/v1.0/loftr_model.onnx) |
-| `big_map.png` | 游戏大地图 (8192×8192) | 3 MB | [⬇ 下载](https://github.com/SCH-CMYK/game-automation/releases/download/v1.0/big_map.png) |
+或手动从 [Releases](https://github.com/SCH-CMYK/game-automation/releases/tag/v1.0) 下载放入对应目录：
 
 ```
 models/

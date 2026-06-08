@@ -36,12 +36,12 @@ screenshots/*
 .codegraph/
 .grounded.json
 
-# Large model files (use Git LFS or manual download)
+# Large model files (use download_models.py to fetch)
 models/*.pt
 models/*.pth
 models/*.onnx
 
-# User data
+# User data (auto-generated)
 minimap_region.json
 resolution.json
 codegraph.db
@@ -55,8 +55,10 @@ gmt/update.json
 gmt/train_data/*
 !gmt/train_data/.gitkeep
 
-# User route data
+# User route data (keep example routes)
 routes/**/*.json
+!routes/**/example_route.json
+!routes/**/1示例*.json
 
 # Release packages
 release_models.zip

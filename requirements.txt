@@ -1,12 +1,38 @@
-torch>=2.0.0
-ultralytics>=8.3.0
-customtkinter>=5.2.0
-opencv-python>=4.8.0
-numpy>=1.24.0
-mss>=9.0.0
-interception-python
-pywin32>=306
-Pillow>=10.0.0
-pyyaml>=6.0
-pynput>=1.7.0
+# ============================================
+# GameAuto Core Dependencies
+# ============================================
+# Install: pip install -r requirements.txt
+# For CUDA 12.1: pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+# For CUDA 11.8: pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+# For CPU only:  pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+
+# Deep Learning
+torch>=2.0.0,<2.7.0
+torchvision  # auto-matched by PyTorch index
+ultralytics>=8.3.0,<9.0.0
 kornia>=0.7.0
+
+# Computer Vision
+opencv-python>=4.8.0,<5.0.0
+
+# GUI
+customtkinter>=5.2.0,<6.0.0
+
+# Screen Capture
+mss>=9.0.0,<10.0.0
+
+# Input Control (Windows only — requires Interception driver)
+interception-python
+
+# Windows API
+pywin32>=306
+
+# Image Processing
+Pillow>=10.0.0,<12.0.0
+
+# Data
+numpy>=1.24.0,<2.3.0
+pyyaml>=6.0,<7.0.0
+
+# Hotkey
+pynput>=1.7.0,<2.0.0
