@@ -135,17 +135,24 @@ import ctypes
 
 _REF_W, _REF_H = 1920, 1080  # 参考分辨率
 
-def _detect_resolution():
-    """检测主显示器分辨率"""
-    try:
-        user32 = ctypes.windll.user32
-        w = user32.GetSystemMetrics(0)
-        h = user32.GetSystemMetrics(1)
-        return w, h
-    except Exception:
-        return _REF_W, _REF_H
+# 默认用系统分辨率（可能被 DPI 缩放误导），后续通过 init_resolution 更正
+_SCREEN_W, _SCREEN_H = _REF_W, _REF_H
+_INITIALIZED = False
 
-_SCREEN_W, _SCREEN_H = _detect_resolution()
+def init_resolution(w: int = None, h: int = None):
+    """用游戏截图的真实分辨率初始化缩放（在首次截图后调用）"""
+    global _SCREEN_W, _SCREEN_H, _INITIALIZED
+    if not _INITIALIZED:
+        if w and h:
+            _SCREEN_W, _SCREEN_H = w, h
+        else:
+            try:
+                user32 = ctypes.windll.user32
+                _SCREEN_W = user32.GetSystemMetrics(0)
+                _SCREEN_H = user32.GetSystemMetrics(1)
+            except Exception:
+                pass
+        _INITIALIZED = True
 
 def check_resolution_change():
     """检测分辨率是否变更，变了就清除旧校准文件"""

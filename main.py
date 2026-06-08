@@ -20,11 +20,18 @@ from src.utils.logger import get_logger, install_crash_handler
 logger = get_logger("gameauto.main")
 install_crash_handler()
 
+# 用截图真实分辨率初始化缩放（修复 DPI 缩放误导）
+from src.utils.config import init_resolution
+from src.engine.screen_capture import ScreenCapture
+_tmp_cap = ScreenCapture()
+_tmp_frame = _tmp_cap.grab()
+if _tmp_frame is not None:
+    init_resolution(_tmp_frame.shape[1], _tmp_frame.shape[0])  # shape=(H,W,C)
+del _tmp_cap, _tmp_frame
+
 # 检查分辨率变更
 from src.utils.config import check_resolution_change
 check_resolution_change()
-
-from src.engine.screen_capture import ScreenCapture
 from src.engine.vision_engine import VisionEngine
 from src.engine.controller import Controller
 from src.automation.automator import Automator
