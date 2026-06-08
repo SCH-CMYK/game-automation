@@ -4,36 +4,35 @@ cd /d "%~dp0"
 setlocal enabledelayedexpansion
 
 echo ========================================
-echo    GameAuto — 一键安装
+echo    GameAuto - One-Click Setup
 echo ========================================
 echo.
 
 :: ===========================================
-:: 1. 管理员权限检查
+:: 1. Admin check
 :: ===========================================
 net session >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [ERROR] 需要管理员权限！
+    echo [ERROR] Administrator privileges required!
     echo.
-    echo 请右键 setup.bat → "以管理员身份运行"
-    echo 或者以管理员身份打开终端后运行此脚本
+    echo Please right-click setup.bat -^> "Run as Administrator"
     echo.
     pause
     exit /b 1
 )
-echo [OK] 管理员权限
+echo [OK] Administrator
 echo.
 
 :: ===========================================
-:: 2. Python 检查
+:: 2. Python check
 :: ===========================================
 set PYTHON=
 where python >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [ERROR] 未找到 Python！
+    echo [ERROR] Python not found!
     echo.
-    echo 请安装 Python 3.10+ ： https://www.python.org/downloads/
-    echo 安装时请勾选 "Add Python to PATH"
+    echo Install Python 3.10+ from: https://www.python.org/downloads/
+    echo Make sure to check "Add Python to PATH" during installation.
     echo.
     pause
     exit /b 1
@@ -41,124 +40,123 @@ if %errorlevel% neq 0 (
 
 for /f "tokens=2" %%v in ('python --version 2^>^&1') do set PYVER=%%v
 echo [OK] Python %PYVER%
-python --version
 
-:: 检查版本 >= 3.10
+:: Check version >= 3.10
 for /f "tokens=1,2 delims=." %%a in ("%PYVER%") do (
     set MAJOR=%%a
     set MINOR=%%b
 )
 if %MAJOR% LSS 3 (
-    echo [ERROR] Python 版本太旧，需要 3.10+
+    echo [ERROR] Python version too old, need 3.10+
     pause
     exit /b 1
 )
 if %MAJOR% EQU 3 if %MINOR% LSS 10 (
-    echo [ERROR] Python 版本需要 3.10+，当前 %PYVER%
+    echo [ERROR] Python version need 3.10+, current is %PYVER%
     pause
     exit /b 1
 )
 echo.
 
 :: ===========================================
-:: 3. 虚拟环境
+:: 3. Virtual environment
 :: ===========================================
 if not exist ".venv\" (
-    echo [3/5] 创建虚拟环境 ...
+    echo [3/5] Creating virtual environment ...
     python -m venv .venv
     if %errorlevel% neq 0 (
-        echo [ERROR] 创建虚拟环境失败
+        echo [ERROR] Failed to create virtual environment
         pause
         exit /b 1
     )
-    echo [OK] 虚拟环境已创建
+    echo [OK] Virtual environment created
 ) else (
-    echo [SKIP] 虚拟环境已存在
+    echo [SKIP] Virtual environment already exists
 )
 
-:: 激活虚拟环境
 call .venv\Scripts\activate.bat
 if %errorlevel% neq 0 (
-    echo [ERROR] 激活虚拟环境失败
+    echo [ERROR] Failed to activate virtual environment
     pause
     exit /b 1
 )
-echo [OK] 虚拟环境已激活
+echo [OK] Virtual environment activated
 echo.
 
 :: ===========================================
-:: 4. 安装 Python 依赖
+:: 4. Install dependencies
 :: ===========================================
-echo [4/5] 安装 Python 依赖 ...
+echo [4/5] Installing Python dependencies ...
 python -m pip install --upgrade pip -q
 pip install -r requirements.txt
 if %errorlevel% neq 0 (
-    echo [ERROR] 依赖安装失败
+    echo [ERROR] Dependency installation failed
     echo.
-    echo 常见问题：
-    echo   1. PyTorch 安装失败 → 手动安装：pip install torch --index-url https://download.pytorch.org/whl/cu121
-    echo   2. interception-python 需要 Visual C++ Build Tools
-    echo   3. 检查网络连接
+    echo Common issues:
+    echo   1. PyTorch install failed: pip install torch --index-url https://download.pytorch.org/whl/cu121
+    echo   2. interception-python needs Visual C++ Build Tools
+    echo   3. Check network connection
     pause
     exit /b 1
 )
-echo [OK] 依赖安装完成
+echo [OK] Dependencies installed
 echo.
 
 :: ===========================================
-:: 5. 下载模型文件
+:: 5. Download model files
 :: ===========================================
-echo [5/5] 下载模型和地图文件 ...
+echo [5/5] Downloading model and map files ...
 python download_models.py
 if %errorlevel% neq 0 (
-    echo [WARN] 部分模型下载失败，请手动下载
+    echo [WARN] Some model downloads failed
     echo.
-    echo 下载地址：
+    echo Download URLs:
     echo   https://github.com/SCH-CMYK/game-automation/releases/tag/v1.0
     echo.
-    echo 下载后放入：
-    echo   models\  → best_20260601.pt, loftr_model.onnx
-    echo   maps\    → big_map.png
+    echo Place downloaded files in:
+    echo   models\  -- best_20260601.pt, loftr_model.onnx
+    echo   maps\    -- big_map.png
 )
 echo.
 
 :: ===========================================
-:: 6. Interception 驱动检查
+:: 6. Interception driver check
 :: ===========================================
 echo ========================================
-echo    Interception 驱动检查
+echo    Interception Driver Check
 echo ========================================
 echo.
 
 sc query interception >nul 2>&1
 if %errorlevel% equ 0 (
-    echo [OK] Interception 驱动已安装并运行
+    echo [OK] Interception driver is running
 ) else (
-    echo [WARN] Interception 驱动未安装！
+    echo [WARN] Interception driver NOT installed!
     echo.
-    echo 这是控制键鼠所必需的内核驱动。安装步骤：
+    echo This kernel driver is required for keyboard/mouse control.
+    echo Installation steps:
     echo.
-    echo   1. 下载: https://github.com/oblitum/Interception/releases/latest
-    echo   2. 解压，管理员 cmd 进入目录
-    echo   3. 执行: install-interception.exe /install
-    echo   4. 重启电脑
+    echo   1. Download: https://github.com/oblitum/Interception/releases/latest
+    echo   2. Extract, open cmd as Administrator in that folder
+    echo   3. Run: install-interception.exe /install
+    echo   4. Restart your computer
     echo.
-    echo 安装后运行: sc query interception  应显示 RUNNING
+    echo Verify: sc query interception should show RUNNING
 )
 echo.
 
 :: ===========================================
-:: 检查结果汇总
+:: Summary
 :: ===========================================
 echo ========================================
-echo    安装完成！
+echo    Setup Complete!
 echo ========================================
 echo.
-echo 下一步：
-echo   run.bat           → 进入图形界面
-echo   python main.py    → 启动程序
+echo Next steps:
+echo   run.bat           Launch GUI
+echo   python main.py    Start program
 echo.
-echo 如果缺少模型文件，运行：
+echo If model files are missing:
 echo   python download_models.py
 echo.
 pause
