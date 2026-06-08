@@ -31,10 +31,21 @@ logs/*
 screenshots/*
 !screenshots/.gitkeep
 
-# Claude Code
+# ==========================================
+# Developer-only files (not for end users)
+# ==========================================
+CLAUDE.md
+使用说明.txt
+tests/
+archive/
+tools/
+gmt/
+
+# Claude Code (local only)
 .claude/
 .codegraph/
 .grounded.json
+.pytest_cache/
 
 # Large model files (use download_models.py to fetch)
 models/*.pt
@@ -46,14 +57,6 @@ minimap_region.json
 resolution.json
 codegraph.db
 .pytest_cache/
-
-# GMT sub-project data (large/generated files)
-gmt/*.pth
-gmt/point.json
-gmt/labels.txt
-gmt/update.json
-gmt/train_data/*
-!gmt/train_data/.gitkeep
 
 # User route data (keep example routes)
 routes/**/*.json
