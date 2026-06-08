@@ -84,11 +84,16 @@ echo [OK] Virtual environment activated
 echo.
 
 :: ===========================================
-:: 4. Install dependencies
+:: 4. Install dependencies (use mirror for faster downloads in China)
 :: ===========================================
 echo [4/5] Installing Python dependencies ...
-python -m pip install --upgrade pip -q
-pip install -r requirements.txt
+
+:: Configure pip mirror for faster downloads
+python -m pip config --site set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple 2>nul
+python -m pip config --site set global.trusted-host pypi.tuna.tsinghua.edu.cn 2>nul
+
+python -m pip install --upgrade pip -q --default-timeout=120
+pip install -r requirements.txt --default-timeout=120
 if %errorlevel% neq 0 (
     echo [ERROR] Dependency installation failed
     echo.
