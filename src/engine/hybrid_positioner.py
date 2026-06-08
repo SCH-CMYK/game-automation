@@ -73,15 +73,23 @@ class HybridPositioner:
         logger.info(f"初始位置: ({x:.0f}, {y:.0f})")
 
     def get_position(self, minimap_bgr):
-        """定位 — 和 main_hybrid.py 一模一样"""
+        """定位 — 自适应分辨率"""
         if minimap_bgr is None or minimap_bgr.size == 0:
             return self._last_pos
 
         if self._last_pos is None:
             return None
 
-        # 1. 甜甜圈遮罩（和参考项目一样）
+        # 1. 缩放到参考尺寸（统一不同分辨率的小地图大小）
         h, w = minimap_bgr.shape[:2]
+        REF_SIZE = 174  # 1920×1080 下的标准小地图尺寸
+        if max(h, w) != REF_SIZE:
+            scale = REF_SIZE / max(h, w)
+            new_w, new_h = int(w * scale), int(h * scale)
+            minimap_bgr = cv2.resize(minimap_bgr, (new_w, new_h))
+            h, w = new_h, new_w
+
+        # 2. 甜甜圈遮罩
         donut = self.make_donut_mask(h, w)
         minimap_masked = cv2.bitwise_and(minimap_bgr, minimap_bgr, mask=donut)
 
