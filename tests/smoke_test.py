@@ -77,11 +77,12 @@ def test_data_yaml():
 
 
 def test_models_exist():
-    """至少有一个 .pt 模型文件"""
+    """模型文件（需从 Releases 单独下载）"""
+    import pytest
     models_dir = Path(__file__).parent.parent / "models"
     models = list(models_dir.glob("*.pt"))
-
-    assert len(models) > 0, "没有找到 .pt 模型文件"
+    if not models:
+        pytest.skip("模型文件需从 GitHub Releases 下载")
     print(f"  PASS: {len(models)} models available")
 
 
