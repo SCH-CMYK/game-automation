@@ -39,14 +39,34 @@ Frame → HoughCircles → LoFTR position → Turn calculation → Walk
          (battle check)   (tracking)     (actual vs desired)
 ```
 
+## Route Format
+
+`routes/*.json` — waypoint arrays in map pixel coordinates:
+```json
+{"waypoints": [[x, y, "name"], ...]}
+```
+
 ## Key Config (src/utils/config.py)
 
 - Mining: `MINING.mine_hold_duration`, `mine_cooldown`
 - Route: `ROUTE.arrive_threshold_px`
 - AI: `AI.model_path`
 
+## Config Flow
+
+```
+gmt/config.json (SIFT params + map path)
+    ↓ sift_config.py
+    ├── SIFT_MATCH_RATIO, MINIMAP area
+    └── maps/big_map.png (8192×8192)
+```
+
 ## Models
 
 - YOLO: best_20260601.pt (ore/creature/obstacle/character)
 - LoFTR: loftr_model.onnx (feature matching)
-- Map: big_map.png (8192x8192)
+- Map: big_map.png (8192×8192)
+
+## GMT Sub-project
+
+`gmt/` is a reference implementation (Game-Map-Tracker). Not used directly — `route_planner.py` replaces it. Key files: `config.json` (SIFT params), `tracker_engine.py` (LoFTR engine).
