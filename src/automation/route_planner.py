@@ -41,11 +41,11 @@ class RoutePlanner:
         self.minimap_region = None  # (x, y, w, h) 屏幕坐标
         self._minimap_detector = MinimapDetector()  # 自动检测器
         self._ai_positioner = None  # AI 定位引擎（可选）
-        # 分辨率自适应阈值
-        self._battle_mm_x = scale_x(1700)
-        self._battle_mm_y = scale_y(200)
+        # 战斗逃跑参数（从最后一次已知的小地图位置推算）
         self._escape_btn_x = scale_x(1114)
         self._escape_btn_y = scale_y(883)
+        self._escape_backup_x = scale_x(960)  # 备用：屏幕中心
+        self._escape_backup_y = scale_y(540)
         self._hybrid_positioner = None  # 混合定位引擎
 
         # SIFT
@@ -115,6 +115,13 @@ class RoutePlanner:
     def set_minimap_region(self, x, y, w, h):
         """设置小地图在屏幕上的位置"""
         self.minimap_region = (x, y, w, h)
+
+    def _has_valid_region(self):
+        """检查是否有有效的小地图区域"""
+        if not self.minimap_region:
+            return False
+        x, y, w, h = self.minimap_region
+        return w > 0 and h > 0
 
     # ========== 小地图处理 ==========
 
@@ -525,9 +532,19 @@ class RoutePlanner:
                 continue
 
             # 2. 战斗检测（每帧，最高优先级）
+            # 小地图消失或跳动 = 进入战斗（相对于已知位置检测，适配任意分辨率）
             self._minimap_detector.reset()
             r = self._minimap_detector.detect(frame)
-            in_battle = (r is None or r[0] < self._battle_mm_x or r[1] > self._battle_mm_y)
+            in_battle = False
+            if r is None:
+                in_battle = True  # minimap completely gone
+            elif self._has_valid_region():
+                # minimap moved significantly from its calibrated position
+                ex, ey, ew, eh = self.minimap_region
+                dx = abs(r[0] - ex)
+                dy = abs(r[1] - ey)
+                if dx > ew * 0.5 or dy > eh * 0.5:
+                    in_battle = True
             battle_ok = time.time() - getattr(self, '_last_battle_time', 0) > 8.0
             if in_battle and battle_ok:
                 logger.info("  进入战斗，退出中...")
@@ -763,11 +780,15 @@ class RoutePlanner:
         logger.info("  采矿停止")
 
     def _escape_battle(self, _frame):
-        """战斗逃跑：ESC+点击"""
+        """战斗逃跑：ESC + 点击（主位置 + 备用位置）"""
         logger.info("  === 战斗逃跑 ===")
         self.controller.press('escape')
         time.sleep(1.5)
+        # 点击主位置
         self.controller.click(self._escape_btn_x, self._escape_btn_y)
+        time.sleep(0.3)
+        # 备用：点击屏幕中心（部分分辨率下按钮在此）
+        self.controller.click(self._escape_backup_x, self._escape_backup_y)
         logger.info("  逃跑完成")
 
     def _mine_at_waypoint(self, automator, name):

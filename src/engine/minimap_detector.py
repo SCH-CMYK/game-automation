@@ -26,8 +26,9 @@ class MinimapDetector:
         self._min_dist = scale_size(150)
         self._param1 = 100
         self._param2 = 25
-        self._min_radius = scale_size(60)
-        self._max_radius = scale_size(110)
+        self._min_radius = scale_size(40)
+        self._max_radius = scale_size(130)
+        self._target_r = scale_size(85)  # expected minimap radius (scaled)
 
         # 搜索区域（小地图一般在右上角 1/3）
         self._roi_top_ratio = 0.0
@@ -133,7 +134,7 @@ class MinimapDetector:
         3. 离 ROI 右上角最近的
         """
         roi_h, roi_w = roi_shape[:2]
-        target_r = 85  # 期望半径
+        target_r = self._target_r  # scaled expected radius
         best_score = float('inf')
         best = None
 
