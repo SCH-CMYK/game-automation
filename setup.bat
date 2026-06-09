@@ -110,7 +110,7 @@ echo.
 :: ===========================================
 :: 5. Download model files
 :: ===========================================
-echo [5/6] Downloading model and map files ...
+echo [5/7] Downloading model and map files ...
 python download_models.py
 if %errorlevel% neq 0 (
     echo [WARN] Some model downloads failed
@@ -125,9 +125,25 @@ if %errorlevel% neq 0 (
 echo.
 
 :: ===========================================
-:: 6. Interception driver (auto-install)
+:: 6. Environment check (CUDA + LoFTR + monitors)
 :: ===========================================
-echo [6/6] Interception driver ...
+echo [6/7] Checking environment ...
+python check_env.py
+if %errorlevel% neq 0 (
+    echo [WARN] Some environment checks failed
+    echo.
+    echo   1. LoFTR model download may have failed - check network/VPN
+    echo   2. CUDA may not be available - install NVIDIA drivers
+    echo   3. Multi-monitor: put game on primary monitor
+    echo.
+    echo   Re-run: python check_env.py
+)
+echo.
+
+:: ===========================================
+:: 7. Interception driver (auto-install)
+:: ===========================================
+echo [7/7] Interception driver ...
 
 sc query interception >nul 2>&1
 if %errorlevel% equ 0 (

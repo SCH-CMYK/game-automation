@@ -31,13 +31,33 @@ class HybridPositioner:
         self.map_bgr = map_image.copy()
         self.map_gray = cv2.cvtColor(map_image, cv2.COLOR_BGR2GRAY)
 
-        # 参考项目的 LoFTR 引擎（一模一样）
-        self.loftr = LoFTR(pretrained='outdoor').to(self.device)
-        self.loftr.eval()
+        # LoFTR 引擎 — 首次运行会从 torch hub 下载 ~40MB 权重
+        try:
+            self.loftr = LoFTR(pretrained='outdoor').to(self.device)
+            self.loftr.eval()
+            logger.info(f"Kornia LoFTR loaded (outdoor, {self.device})")
+        except Exception as e:
+            msg = str(e).lower()
+            if "timeout" in msg or "connection" in msg or "ssl" in msg:
+                raise RuntimeError(
+                    "\n[ERROR] LoFTR model download failed - network issue\n"
+                    "  The navigation system needs to download ~40MB of AI model weights\n"
+                    "  on first run. Please check your internet connection and VPN,\n"
+                    "  then run: python check_env.py\n"
+                ) from e
+            elif "out of memory" in msg or "oom" in msg:
+                raise RuntimeError(
+                    "\n[ERROR] GPU out of memory - need 2GB+ free VRAM\n"
+                    "  Close other applications and retry.\n"
+                ) from e
+            else:
+                raise RuntimeError(
+                    f"\n[ERROR] Failed to load LoFTR positioning model\n"
+                    f"  Error: {e}\n"
+                    f"  Run: python check_env.py\n"
+                ) from e
 
         self._last_pos = None
-
-        logger.info(f"Kornia LoFTR 定位引擎 (outdoor, {self.device}, 和参考项目一致)")
 
     def _loftr_preprocess(self, img_bgr):
         """预处理"""
