@@ -187,7 +187,10 @@ if "%INSTALLER%"=="" (
     goto :summary
 )
 
-"%INSTALLER%" /install
+:: Use 'start' to create a new window with interactive desktop session,
+:: which is required for UAC elevation on driver install.
+echo   A setup window will open - follow the prompts to install.
+start "Interception Driver Setup" /wait "%INSTALLER%" /install
 if %errorlevel% equ 0 (
     echo   [OK] Interception driver installed!
     echo.
@@ -197,18 +200,25 @@ if %errorlevel% equ 0 (
     echo   +====================================================+
 ) else (
     echo   [FAIL] Driver installation failed (error %errorlevel%)
-    echo   Please install manually from %TEMP_DIR%
+    echo.
+    echo   Try manual install:
+    echo   1. Open: %TEMP_DIR%
+    echo   2. Find: install-interception.exe
+    echo   3. Right-click ^> Run as Administrator
+    echo   4. Click Install, then restart
+    echo.
+    :: Don't delete temp dir on failure
+    goto :summary
 )
 
-:: Cleanup
+:: Cleanup on success
 rmdir /s /q "%TEMP_DIR%" 2>nul
-    echo Verify: sc query interception should show RUNNING
-)
 echo.
 
 :: ===========================================
 :: Summary
 :: ===========================================
+:summary
 echo ========================================
 echo    Setup Complete!
 echo ========================================
