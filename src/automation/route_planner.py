@@ -16,7 +16,7 @@ import time
 import threading
 import logging
 
-from src.utils.config import ROUTE, AI, scale_x, scale_y, CURRENT_H
+from src.utils.config import ROUTE, AI, APP, scale_x, scale_y, CURRENT_H
 from src.engine.minimap_detector import MinimapDetector
 
 logger = logging.getLogger("gameauto.route")
@@ -41,11 +41,8 @@ class RoutePlanner:
         self.minimap_region = None  # (x, y, w, h) 屏幕坐标
         self._minimap_detector = MinimapDetector()  # 自动检测器
         self._ai_positioner = None  # AI 定位引擎（可选）
-        # 战斗逃跑参数（从最后一次已知的小地图位置推算）
-        self._escape_btn_x = scale_x(1114)
-        self._escape_btn_y = scale_y(883)
-        self._escape_backup_x = scale_x(960)  # 备用：屏幕中心
-        self._escape_backup_y = scale_y(540)
+        # 战斗逃跑 — 多位置兜底（从高概率到低概率依次点击）
+        self._escape_positions = self._load_escape_positions()
         self._hybrid_positioner = None  # 混合定位引擎
 
         # SIFT
@@ -122,6 +119,29 @@ class RoutePlanner:
             return False
         x, y, w, h = self.minimap_region
         return w > 0 and h > 0
+
+    def _load_escape_positions(self):
+        """加载逃生按钮位置：用户校准 > 默认多位置兜底"""
+        import json
+        pos_file = APP.project_dir / "escape_position.json"
+        if pos_file.exists():
+            try:
+                with open(pos_file, encoding="utf-8") as f:
+                    data = json.load(f)
+                saved = [(p["x"], p["y"]) for p in data.get("positions", [])]
+                if saved:
+                    logger.info(f"加载校准逃生位置: {saved[0]}")
+                    return saved
+            except Exception:
+                pass
+        # 默认：5 个位置从高概率到低概率
+        return [
+            (scale_x(1114), scale_y(883)),   # 1080p 确认按钮
+            (scale_x(960),  scale_y(540)),   # 屏幕中心
+            (scale_x(700),  scale_y(540)),   # 中心偏左
+            (scale_x(960),  scale_y(400)),   # 中心偏上
+            (scale_x(600),  scale_y(540)),   # 左侧
+        ]
 
     # ========== 小地图处理 ==========
 
@@ -780,16 +800,15 @@ class RoutePlanner:
         logger.info("  采矿停止")
 
     def _escape_battle(self, _frame):
-        """战斗逃跑：ESC + 点击（主位置 + 备用位置）"""
+        """战斗逃跑：ESC + 多位置兜底点击"""
         logger.info("  === 战斗逃跑 ===")
         self.controller.press('escape')
         time.sleep(1.5)
-        # 点击主位置
-        self.controller.click(self._escape_btn_x, self._escape_btn_y)
-        time.sleep(0.3)
-        # 备用：点击屏幕中心（部分分辨率下按钮在此）
-        self.controller.click(self._escape_backup_x, self._escape_backup_y)
-        logger.info("  逃跑完成")
+        for i, (x, y) in enumerate(self._escape_positions):
+            self.controller.click(x, y)
+            if i < len(self._escape_positions) - 1:
+                time.sleep(0.15)
+        logger.info(f"  逃跑完成 (点击 {len(self._escape_positions)} 个位置)")
 
     def _mine_at_waypoint(self, automator, name):
         """在途经点执行采矿（检测到矿才采，否则直接跳过）"""

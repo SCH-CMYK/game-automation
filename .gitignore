@@ -55,8 +55,8 @@ models/*.onnx
 # User data (auto-generated)
 minimap_region.json
 resolution.json
+escape_position.json
 codegraph.db
-.pytest_cache/
 
 # User route data (keep example routes)
 routes/**/*.json
